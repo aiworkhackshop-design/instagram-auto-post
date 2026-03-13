@@ -1,6 +1,8 @@
-import requests
 import random
 import time
+from flask import Flask
+
+app = Flask(__name__)
 
 TAG = "aiworkhacksho-22"
 
@@ -8,8 +10,8 @@ products = [
     ("Echo Dot", "B09B8V1LZ3"),
     ("Fire TV Stick", "B0BQVPL3Q5"),
     ("Anker モバイルバッテリー", "B07S829LBX"),
-    ("SwitchBot スマートロック", "B07XH9YPK9"),
-    ("Echo Show 5", "B08KGTZP3S")
+    ("SwitchBotスマートロック", "B07XH9YPK9"),
+    ("エコーショー5", "B08KGTZP3S")
 ]
 
 def generate_post():
@@ -20,7 +22,7 @@ def generate_post():
     link = f"https://www.amazon.co.jp/dp/{asin}/?tag={TAG}"
 
     caption = f"""
-【Amazon人気商品】
+Amazon人気商品
 
 {name}
 
@@ -34,6 +36,17 @@ def generate_post():
 
     print(caption)
 
-while True:
-    generate_post()
-    time.sleep(3600)
+@app.route("/")
+def home():
+    return "Instagram Auto Post Running"
+
+def worker():
+    while True:
+        generate_post()
+        time.sleep(3600)
+
+import threading
+threading.Thread(target=worker).start()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
