@@ -1,5 +1,7 @@
+import os
 import random
 import time
+import threading
 from flask import Flask
 
 app = Flask(__name__)
@@ -45,8 +47,8 @@ def worker():
         generate_post()
         time.sleep(3600)
 
-import threading
-threading.Thread(target=worker).start()
+threading.Thread(target=worker, daemon=True).start()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
