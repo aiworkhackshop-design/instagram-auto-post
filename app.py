@@ -2,7 +2,7 @@ import requests
 import random
 import time
 
-TAG = "エアワークハックショー-22"
+TAG = "aiworkhacksho-22"
 
 products = [
     ("Echo Dot", "B09B8V1LZ3"),
