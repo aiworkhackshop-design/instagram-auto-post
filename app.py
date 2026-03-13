@@ -39,7 +39,7 @@ def generate_caption(item):
 
 
 if __name__ == "__main__":
-    RAKUTEN_APP_ID = 4ca9cb0b-cba7-4e23-9b48-05bba9a349d1
+    RAKUTEN_APP_ID = "4ca9cb0b-cba7-4e23-9b48-05bba9a349d1"
 
     item = get_rakuten_items(RAKUTEN_APP_ID, "便利グッズ")
     caption = generate_caption(item)
