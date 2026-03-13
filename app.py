@@ -1,49 +1,39 @@
 import requests
 import random
+import time
 
-# 楽天商品取得
-def get_rakuten_items(app_id, keyword):
-    url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
-    params = {
-        "applicationId": app_id,
-        "keyword": keyword,
-        "hits": 5
-    }
+TAG = "エアワークハックショー-22"
 
-    res = requests.get(url, params=params)
-    data = res.json()
+products = [
+    ("Echo Dot", "B09B8V1LZ3"),
+    ("Fire TV Stick", "B0BQVPL3Q5"),
+    ("Anker モバイルバッテリー", "B07S829LBX"),
+    ("SwitchBot スマートロック", "B07XH9YPK9"),
+    ("Echo Show 5", "B08KGTZP3S")
+]
 
-    items = data["Items"]
-    item = random.choice(items)["Item"]
+def generate_post():
+    product = random.choice(products)
+    name = product[0]
+    asin = product[1]
 
-    return {
-        "title": item["itemName"],
-        "url": item["itemUrl"],
-        "image": item["mediumImageUrls"][0]["imageUrl"]
-    }
+    link = f"https://www.amazon.co.jp/dp/{asin}/?tag={TAG}"
 
-
-# 投稿文生成
-def generate_caption(item):
     caption = f"""
-【おすすめ商品】
+【Amazon人気商品】
 
-{item['title']}
+{name}
 
-気になる人はこちら👇
-{item['url']}
+詳細はこちら👇
+{link}
 
-#楽天 #おすすめ商品 #買ってよかった
+#Amazonおすすめ
+#便利グッズ
+#買ってよかった
 """
-    return caption
 
+    print(caption)
 
-if __name__ == "__main__":
-    RAKUTEN_APP_ID = "4ca9cb0b-cba7-4e23-9b48-05bba9a349d1"
-
-    item = get_rakuten_items(RAKUTEN_APP_ID, "便利グッズ")
-    caption = generate_caption(item)
-
-    print("タイトル:", item["title"])
-    print("URL:", item["url"])
-    print("投稿文:", caption)
+while True:
+    generate_post()
+    time.sleep(3600)
