@@ -1,45 +1,26 @@
 import requests
-from bs4 import BeautifulSoup
 from flask import Flask, jsonify
-import random
+import re
 
 app = Flask(__name__)
 
-
 def get_rakuten_ranking():
     url = "https://ranking.rakuten.co.jp/daily/564500/"
-    res = requests.get(url)
-    soup = BeautifulSoup(res.text, "html.parser")
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    html = r.text
+
+    titles = re.findall(r'itemName":"(.*?)"', html)
+    urls = re.findall(r'itemUrl":"(.*?)"', html)
 
     items = []
 
-    products = soup.select(".rnkRanking_itemName")
-
-    for p in products[:10]:
-        title = p.text.strip()
-        link = p.get("href")
-
+    for i in range(min(len(titles), len(urls), 10)):
         items.append({
-            "title": title,
-            "url": link
+            "title": titles[i],
+            "url": urls[i]
         })
 
     return items
-
-
-def generate_caption(product):
-
-    templates = [
-        "【今売れてる】\n{}\n\n詳細はこちら👇\n{}\n\n#楽天市場 #便利グッズ",
-        "楽天ランキング上位🔥\n{}\n\n購入はこちら👇\n{}\n\n#楽天ランキング",
-        "これ売れてる👇\n{}\n\nリンク👇\n{}\n\n#買ってよかった"
-    ]
-
-    template = random.choice(templates)
-
-    caption = template.format(product["title"], product["url"])
-
-    return caption
 
 
 @app.route("/")
@@ -49,30 +30,8 @@ def home():
 
 @app.route("/rakuten")
 def rakuten():
-
     items = get_rakuten_ranking()
-
     return jsonify(items)
-
-
-@app.route("/post")
-def post():
-
-    items = get_rakuten_ranking()
-
-    posts = []
-
-    for i in items[:5]:
-
-        caption = generate_caption(i)
-
-        posts.append({
-            "product": i["title"],
-            "caption": caption,
-            "url": i["url"]
-        })
-
-    return jsonify(posts)
 
 
 if __name__ == "__main__":
