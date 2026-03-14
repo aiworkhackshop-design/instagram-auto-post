@@ -1,43 +1,38 @@
 import requests
+import os
 from flask import Flask, jsonify
 
 app = Flask(__name__)
 
+RAKUTEN_APP_ID = os.environ.get("RAKUTEN_APP_ID")
 
-def get_rakuten():
 
-    url = "https://ranking.rakuten.co.jp/api/ranking/v1/json"
+def get_rakuten_items(keyword="イヤホン"):
+
+    url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
 
     params = {
-        "period": "daily",
-        "genreId": "564500",
-        "page": "1"
-    }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0"
+        "applicationId": RAKUTEN_APP_ID,
+        "keyword": keyword,
+        "hits": 10
     }
 
     try:
 
-        r = requests.get(url, params=params, headers=headers, timeout=10)
-
-        if r.status_code != 200:
-            return {"error": "Rakuten API status error", "status": r.status_code}
-
+        r = requests.get(url, params=params, timeout=10)
         data = r.json()
 
         items = []
 
-        ranking = data.get("RankingItems", [])
+        for item in data.get("Items", []):
 
-        for item in ranking[:10]:
-
-            product = item.get("Item", {})
+            product = item["Item"]
 
             items.append({
-                "title": product.get("itemName"),
-                "url": product.get("itemUrl")
+                "title": product["itemName"],
+                "price": product["itemPrice"],
+                "url": product["itemUrl"],
+                "image": product["mediumImageUrls"][0]["imageUrl"]
             })
 
         return items
@@ -54,7 +49,12 @@ def home():
 
 @app.route("/rakuten")
 def rakuten():
-    return jsonify(get_rakuten())
+    return jsonify(get_rakuten_items())
+
+
+@app.route("/rakuten/<keyword>")
+def rakuten_search(keyword):
+    return jsonify(get_rakuten_items(keyword))
 
 
 if __name__ == "__main__":
