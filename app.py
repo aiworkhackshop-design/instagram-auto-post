@@ -1,32 +1,33 @@
 import requests
 from flask import Flask, jsonify
-from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
 def get_rakuten_ranking():
 
-    url = "https://ranking.rakuten.co.jp/daily/564500/"
+    url = "https://ranking.rakuten.co.jp/api/ranking/v1/json"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    params = {
+        "period": "daily",
+        "genreId": "564500",
+        "page": "1"
     }
 
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    r = requests.get(url, params=params, headers=headers)
+
+    data = r.json()
 
     items = []
 
-    products = soup.select("a.rnkRanking_itemName")
-
-    for p in products[:10]:
-
-        title = p.text.strip()
-        link = p.get("href")
+    for item in data["RankingItems"][:10]:
 
         items.append({
-            "title": title,
-            "url": link
+            "title": item["Item"]["itemName"],
+            "url": item["Item"]["itemUrl"]
         })
 
     return items
@@ -39,9 +40,7 @@ def home():
 
 @app.route("/rakuten")
 def rakuten():
-
     items = get_rakuten_ranking()
-
     return jsonify(items)
 
 
