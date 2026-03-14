@@ -1,29 +1,52 @@
-from flask import Flask, jsonify
-import requests
 import os
+import requests
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return "Rakuten API server running"
+RAKUTEN_KEY = os.getenv("RAKUTEN_ACCESS_KEY")
 
-@app.route("/post")
-def fetch():
 
-    APP_ID = os.getenv("RAKUTEN_APP_ID")
-
+def get_rakuten_items(keyword="イヤホン"):
     url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
 
     params = {
-        "applicationId": APP_ID,
-        "keyword": "楽天",
-        "hits": 5
+        "applicationId": RAKUTEN_KEY,
+        "keyword": keyword,
+        "hits": 10,
+        "sort": "-reviewCount"
     }
 
-    res = requests.get(url, params=params)
+    response = requests.get(url, params=params)
+    data = response.json()
 
-    return jsonify(res.json())
+    items = []
+
+    if "Items" in data:
+        for item in data["Items"]:
+            i = item["Item"]
+
+            items.append({
+                "title": i["itemName"],
+                "price": i["itemPrice"],
+                "url": i["itemUrl"],
+                "image": i["mediumImageUrls"][0]["imageUrl"] if i["mediumImageUrls"] else ""
+            })
+
+    return items
+
+
+@app.route("/")
+def home():
+    return "Instagram Auto Post System Running"
+
+
+@app.route("/rakuten")
+def rakuten():
+    items = get_rakuten_items()
+    return jsonify(items)
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
