@@ -1,0 +1,33 @@
+import fetch from "node-fetch";
+
+const res = await fetch("https://instagram-auto-post.onrender.com/product");
+const product = await res.json();
+
+const create = await fetch(
+  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image_url: product.image,
+      caption: product.caption,
+      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+    })
+  }
+);
+
+const media = await create.json();
+
+await fetch(
+  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media_publish`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      creation_id: media.id,
+      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+    })
+  }
+);
+
+console.log("Instagram posted");
