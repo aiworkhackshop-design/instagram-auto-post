@@ -1,23 +1,33 @@
-name: Post to Instagram
+name: Instagram Auto Post
+
 on:
   schedule:
-    - cron: '0 0 * * *'   # 09:00 JST
-    - cron: '0 6 * * *'   # 15:00 JST
-    - cron: '0 11 * * *'  # 20:00 JST
+    - cron: '0 0 * * *'
+    - cron: '0 6 * * *'
+    - cron: '0 11 * * *'
 
 jobs:
   post:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: node run_instagram.mjs
-        env:
-          DATABASE_URL: <LaTex>${{ secrets.DATABASE_URL }}
-          FACEBOOK_PAGE_ACCESS_TOKEN: $</LaTex>{{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-          INSTAGRAM_BUSINESS_ACCOUNT_ID: <LaTex>${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
-          BUILT_IN_FORGE_API_URL: $</LaTex>{{ secrets.BUILT_IN_FORGE_API_URL }}
-          BUILT_IN_FORGE_API_KEY: ${{ secrets.BUILT_IN_FORGE_API_KEY }}
+
+      - name: Get Product
+        run: |
+          curl https://instagram-auto-post.onrender.com/product > product.json
+
+      - name: Extract Data
+        run: |
+          PRODUCT_NAME=$(cat product.json | jq -r '.product_name')
+          IMAGE=$(cat product.json | jq -r '.image')
+          CAPTION=$(cat product.json | jq -r '.caption')
+
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "CAPTION=$CAPTION" >> $GITHUB_ENV
+
+      - name: Post Image
+        run: |
+          curl -X POST "https://graph.facebook.com/v18.0/${{ secrets.INSTAGRAM_ACCOUNT_ID }}/media" \
+          -F "image_url=$IMAGE" \
+          -F "caption=$CAPTION" \
+          -F "access_token=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}"
