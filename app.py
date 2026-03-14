@@ -1,39 +1,33 @@
-import os
 import requests
-from flask import Flask, jsonify, request
+from bs4 import BeautifulSoup
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-RAKUTEN_KEY = os.getenv("RAKUTEN_ACCESS_KEY")
+def get_rakuten_ranking():
+    url = "https://ranking.rakuten.co.jp/daily/564500/"  # イヤホンランキング
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, "html.parser")
 
-def fetch_raw(keyword):
-    url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
+    items = []
+    for item in soup.select(".rnkRanking_itemName")[:10]:
+        title = item.text.strip()
+        link = item.get("href")
+        items.append({
+            "title": title,
+            "url": link
+        })
 
-    params = {
-        "applicationId": RAKUTEN_KEY,
-        "keyword": keyword,
-        "hits": 5
-    }
-
-    r = requests.get(url, params=params)
-
-    return r.json()
-
+    return items
 
 @app.route("/")
 def home():
     return "Instagram自動投稿システム稼働"
 
-
 @app.route("/rakuten")
 def rakuten():
-    keyword = request.args.get("keyword", "イヤホン")
-
-    data = fetch_raw(keyword)
-
-    return jsonify(data)
-
+    items = get_rakuten_ranking()
+    return jsonify(items)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=10000)
