@@ -18,16 +18,25 @@ jobs:
 
       - name: Extract Data
         run: |
-          PRODUCT_NAME=$(cat product.json | jq -r '.product_name')
           IMAGE=$(cat product.json | jq -r '.image')
           CAPTION=$(cat product.json | jq -r '.caption')
 
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           echo "CAPTION=$CAPTION" >> $GITHUB_ENV
 
-      - name: Post Image
+      - name: Create Media
         run: |
           curl -X POST "https://graph.facebook.com/v18.0/${{ secrets.INSTAGRAM_ACCOUNT_ID }}/media" \
           -F "image_url=$IMAGE" \
           -F "caption=$CAPTION" \
+          -F "access_token=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}" \
+          > response.json
+
+          MEDIA_ID=$(cat response.json | jq -r '.id')
+          echo "MEDIA_ID=$MEDIA_ID" >> $GITHUB_ENV
+
+      - name: Publish Post
+        run: |
+          curl -X POST "https://graph.facebook.com/v18.0/${{ secrets.INSTAGRAM_ACCOUNT_ID }}/media_publish" \
+          -F "creation_id=$MEDIA_ID" \
           -F "access_token=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}"
