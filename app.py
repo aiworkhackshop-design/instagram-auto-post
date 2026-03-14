@@ -1,50 +1,37 @@
 import os
 import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 RAKUTEN_KEY = os.getenv("RAKUTEN_ACCESS_KEY")
 
-
-def get_rakuten_items(keyword="イヤホン"):
+def fetch_raw(keyword):
     url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
 
     params = {
         "applicationId": RAKUTEN_KEY,
         "keyword": keyword,
-        "hits": 10,
-        "sort": "-reviewCount"
+        "hits": 5
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
+    r = requests.get(url, params=params)
 
-    items = []
-
-    if "Items" in data:
-        for item in data["Items"]:
-            i = item["Item"]
-
-            items.append({
-                "title": i["itemName"],
-                "price": i["itemPrice"],
-                "url": i["itemUrl"],
-                "image": i["mediumImageUrls"][0]["imageUrl"] if i["mediumImageUrls"] else ""
-            })
-
-    return items
+    return r.json()
 
 
 @app.route("/")
 def home():
-    return "Instagram Auto Post System Running"
+    return "Instagram自動投稿システム稼働"
 
 
 @app.route("/rakuten")
 def rakuten():
-    items = get_rakuten_items()
-    return jsonify(items)
+    keyword = request.args.get("keyword", "イヤホン")
+
+    data = fetch_raw(keyword)
+
+    return jsonify(data)
 
 
 if __name__ == "__main__":
