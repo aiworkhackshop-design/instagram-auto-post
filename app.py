@@ -20,22 +20,27 @@ def post():
     params = {
         "applicationId": RAKUTEN_APP_ID,
         "keyword": "イヤホン",
-        "hits": 1
+        "hits": 1,
+        "format": "json"
     }
 
     r = requests.get(rakuten_url, params=params)
     data = r.json()
 
-    if "Items" not in data or len(data["Items"]) == 0:
-        return jsonify({"error":"楽天商品取得失敗","raw":data})
+    if "Items" not in data:
+        return jsonify(data)
 
     item = data["Items"][0]["Item"]
 
     title = item["itemName"]
-    image = item["mediumImageUrls"][0]["imageUrl"]
+    image = item["mediumImageUrls"][0]["imageUrl"].replace("?_ex=128x128","")
     link = item["itemUrl"]
 
-    caption = f"{title}\n\n詳しくはこちら\n{link}"
+    caption = f"""{title}
+
+楽天でチェック👇
+{link}
+"""
 
     create_url = f"https://graph.facebook.com/v19.0/{ACCOUNT_ID}/media"
 
@@ -49,7 +54,7 @@ def post():
     creation = r1.json()
 
     if "id" not in creation:
-        return jsonify({"instagram_error":creation})
+        return jsonify(creation)
 
     publish_url = f"https://graph.facebook.com/v19.0/{ACCOUNT_ID}/media_publish"
 
@@ -62,10 +67,8 @@ def post():
 
     return jsonify({
         "product": title,
-        "link": link,
         "instagram": r2.json()
     })
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
