@@ -9,7 +9,7 @@ ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
 
 @app.route("/")
 def home():
-    return "Instagram Auto Post Running"
+    return "Instagram自動投稿実行中"
 
 @app.route("/post")
 def post():
@@ -24,3 +24,7 @@ def post():
 
     r = requests.post(url, data=data)
     return r.text
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
