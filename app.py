@@ -1,54 +1,37 @@
 import os
-import random
-import time
-import threading
+import requests
 from flask import Flask
 
 app = Flask(__name__)
 
-TAG = "aiworkhacksho-22"
-
-products = [
-    ("Echo Dot", "B09B8V1LZ3"),
-    ("Fire TV Stick", "B0BQVPL3Q5"),
-    ("Anker モバイルバッテリー", "B07S829LBX"),
-    ("SwitchBotスマートロック", "B07XH9YPK9"),
-    ("エコーショー5", "B08KGTZP3S")
-]
-
-def generate_post():
-    product = random.choice(products)
-    name = product[0]
-    asin = product[1]
-
-    link = f"https://www.amazon.co.jp/dp/{asin}/?tag={TAG}"
-
-    caption = f"""
-Amazon人気商品
-
-{name}
-
-詳細はこちら👇
-{link}
-
-#Amazonおすすめ
-#便利グッズ
-#買ってよかった
-"""
-
-    print(caption)
+TOKEN = os.environ.get("INSTAGRAM_TOKEN")
+ACCOUNT_ID = os.environ.get("INSTAGRAM_ACCOUNT_ID")
 
 @app.route("/")
 def home():
-    return "Instagram Auto Post Running"
+    return "Instagram自動投稿BOT稼働中"
 
-def worker():
-    while True:
-        generate_post()
-        time.sleep(3600)
+@app.route("/post")
+def post():
+    image_url = "https://picsum.photos/1080/1080"
+    caption = "AI WorkHack テスト投稿 🚀"
 
-threading.Thread(target=worker, daemon=True).start()
+    create_url = f"https://graph.facebook.com/v19.0/{ACCOUNT_ID}/media"
+    create_res = requests.post(create_url, data={
+        "image_url": image_url,
+        "caption": caption,
+        "access_token": TOKEN
+    }).json()
+
+    creation_id = create_res.get("id")
+
+    publish_url = f"https://graph.facebook.com/v19.0/{ACCOUNT_ID}/media_publish"
+    publish_res = requests.post(publish_url, data={
+        "creation_id": creation_id,
+        "access_token": TOKEN
+    }).json()
+
+    return publish_res
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
