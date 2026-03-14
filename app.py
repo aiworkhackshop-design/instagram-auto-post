@@ -6,10 +6,10 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Rakuten API OK"
+    return "Rakuten API server running"
 
 @app.route("/post")
-def post():
+def fetch():
 
     APP_ID = os.getenv("RAKUTEN_APP_ID")
 
@@ -17,13 +17,13 @@ def post():
 
     params = {
         "applicationId": APP_ID,
-        "keyword": "人気",
+        "keyword": "楽天",
         "hits": 5
     }
 
-    r = requests.get(url, params=params)
+    res = requests.get(url, params=params)
 
-    return jsonify(r.json())
+    return jsonify(res.json())
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
