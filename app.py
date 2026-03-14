@@ -1,35 +1,29 @@
-import os
-import requests
 from flask import Flask, jsonify
+import requests
+import os
 
 app = Flask(__name__)
 
-# トップページ
 @app.route("/")
 def home():
-    return "Instagram Auto Post API running"
+    return "Rakuten API server running"
 
-# 楽天ランキング取得
 @app.route("/post")
 def fetch():
 
     APP_ID = os.getenv("RAKUTEN_APP_ID")
 
-    if not APP_ID:
-        return {"error": "RAKUTEN_APP_ID not set"}
-
-    url = "https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20220601"
+    url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
 
     params = {
         "applicationId": APP_ID,
-        "genreId": "0"
+        "keyword": "人気",
+        "sort": "-reviewCount"
     }
 
     res = requests.get(url, params=params)
 
     return jsonify(res.json())
 
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=10000)
