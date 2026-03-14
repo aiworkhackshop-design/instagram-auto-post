@@ -1,31 +1,25 @@
-import fetch from "node-fetch";
+name: Post to Instagram
 
-const data = await fetch("https://instagram-auto-post.onrender.com/product");
-const product = await data.json();
+on:
+  schedule:
+    - cron: '0 0 * * *'
+    - cron: '0 6 * * *'
+    - cron: '0 11 * * *'
 
-const create = await fetch(
-  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      image_url: product.image,
-      caption: product.caption,
-      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-    })
-  }
-);
+jobs:
+  post:
+    runs-on: ubuntu-latest
 
-const media = await create.json();
+    steps:
+      - uses: actions/checkout@v3
 
-await fetch(
-  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media_publish`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      creation_id: media.id,
-      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-    })
-  }
-);
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - run: npm install node-fetch
+
+      - run: node run_instagram.mjs
+        env:
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
