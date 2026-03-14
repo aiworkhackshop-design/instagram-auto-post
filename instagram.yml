@@ -1,42 +1,31 @@
-name: Instagram Auto Post
+import fetch from "node-fetch";
 
-on:
-  schedule:
-    - cron: '0 0 * * *'
-    - cron: '0 6 * * *'
-    - cron: '0 11 * * *'
+const data = await fetch("https://instagram-auto-post.onrender.com/product");
+const product = await data.json();
 
-jobs:
-  post:
-    runs-on: ubuntu-latest
+const create = await fetch(
+  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image_url: product.image,
+      caption: product.caption,
+      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+    })
+  }
+);
 
-    steps:
+const media = await create.json();
 
-      - name: Get Product
-        run: |
-          curl https://instagram-auto-post.onrender.com/product > product.json
-
-      - name: Extract Data
-        run: |
-          IMAGE=$(cat product.json | jq -r '.image')
-          CAPTION=$(cat product.json | jq -r '.caption')
-
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          echo "CAPTION=$CAPTION" >> $GITHUB_ENV
-
-      - name: Create Media
-        run: |
-          curl -X POST "https://graph.facebook.com/v18.0/${{ secrets.INSTAGRAM_ACCOUNT_ID }}/media" \
-          -F "image_url=$IMAGE" \
-          -F "caption=$CAPTION" \
-          -F "access_token=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}" \
-          > response.json
-
-          MEDIA_ID=$(cat response.json | jq -r '.id')
-          echo "MEDIA_ID=$MEDIA_ID" >> $GITHUB_ENV
-
-      - name: Publish Post
-        run: |
-          curl -X POST "https://graph.facebook.com/v18.0/${{ secrets.INSTAGRAM_ACCOUNT_ID }}/media_publish" \
-          -F "creation_id=$MEDIA_ID" \
-          -F "access_token=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}"
+await fetch(
+  `https://graph.facebook.com/v18.0/${process.env.INSTAGRAM_ACCOUNT_ID}/media_publish`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      creation_id: media.id,
+      access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+    })
+  }
+);
