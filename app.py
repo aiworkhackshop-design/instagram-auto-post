@@ -3,7 +3,8 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-def get_rakuten_ranking():
+
+def get_rakuten():
 
     url = "https://ranking.rakuten.co.jp/api/ranking/v1/json"
 
@@ -17,20 +18,33 @@ def get_rakuten_ranking():
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, params=params, headers=headers)
+    try:
 
-    data = r.json()
+        r = requests.get(url, params=params, headers=headers, timeout=10)
 
-    items = []
+        if r.status_code != 200:
+            return {"error": "Rakuten API status error", "status": r.status_code}
 
-    for item in data["RankingItems"][:10]:
+        data = r.json()
 
-        items.append({
-            "title": item["Item"]["itemName"],
-            "url": item["Item"]["itemUrl"]
-        })
+        items = []
 
-    return items
+        ranking = data.get("RankingItems", [])
+
+        for item in ranking[:10]:
+
+            product = item.get("Item", {})
+
+            items.append({
+                "title": product.get("itemName"),
+                "url": product.get("itemUrl")
+            })
+
+        return items
+
+    except Exception as e:
+
+        return {"error": str(e)}
 
 
 @app.route("/")
@@ -40,8 +54,7 @@ def home():
 
 @app.route("/rakuten")
 def rakuten():
-    items = get_rakuten_ranking()
-    return jsonify(items)
+    return jsonify(get_rakuten())
 
 
 if __name__ == "__main__":
