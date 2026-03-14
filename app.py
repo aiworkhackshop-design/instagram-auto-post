@@ -4,14 +4,19 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
+# トップページ
 @app.route("/")
 def home():
-    return "API running"
+    return "Instagram Auto Post API running"
 
-@app.route("/fetch")
+# 楽天ランキング取得
+@app.route("/post")
 def fetch():
 
     APP_ID = os.getenv("RAKUTEN_APP_ID")
+
+    if not APP_ID:
+        return {"error": "RAKUTEN_APP_ID not set"}
 
     url = "https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20220601"
 
@@ -26,4 +31,5 @@ def fetch():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
