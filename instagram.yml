@@ -1,0 +1,23 @@
+name: Post to Instagram
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 09:00 JST
+    - cron: '0 6 * * *'   # 15:00 JST
+    - cron: '0 11 * * *'  # 20:00 JST
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: node run_instagram.mjs
+        env:
+          DATABASE_URL: <LaTex>${{ secrets.DATABASE_URL }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: $</LaTex>{{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: <LaTex>${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          BUILT_IN_FORGE_API_URL: $</LaTex>{{ secrets.BUILT_IN_FORGE_API_URL }}
+          BUILT_IN_FORGE_API_KEY: ${{ secrets.BUILT_IN_FORGE_API_KEY }}
