@@ -22,13 +22,9 @@ async function run() {
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: JSON.stringify({
-        image_url: image,
-        caption: caption,
-        access_token: TOKEN
-      })
+      body: `image_url=${encodeURIComponent(image)}&caption=${encodeURIComponent(caption)}&access_token=${TOKEN}`
     }
   )
 
@@ -43,12 +39,9 @@ async function run() {
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: JSON.stringify({
-        creation_id: media.id,
-        access_token: TOKEN
-      })
+      body: `creation_id=${media.id}&access_token=${TOKEN}`
     }
   )
 
