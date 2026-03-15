@@ -22,5 +22,9 @@ jobs:
 
       - run: node run_instagram.mjs
         env:
-          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          # 複数のキー名に対応
+          IG_ACCOUNT_ID: <LaTex>${{ secrets.IG_ACCOUNT_ID }}
+          INSTAGRAM_ACCOUNT_ID: $</LaTex>{{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: <LaTex>${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: $</LaTex>{{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          FB_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
