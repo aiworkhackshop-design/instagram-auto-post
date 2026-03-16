@@ -11,7 +11,12 @@ const ACCESS_TOKEN =
 const RAKUTEN_APP_ID =
   process.env.RAKUTEN_APP_ID || process.env.RAKUTEN_ACCESS_KEY;
 
-async function getRakutenRanking(){
+async function getRakutenRanking() {
+
+  if (!RAKUTEN_APP_ID) {
+    console.log("RAKUTEN_APP_ID missing");
+    process.exit(1);
+  }
 
   const url =
     `https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20170628?applicationId=${RAKUTEN_APP_ID}`;
@@ -19,61 +24,78 @@ async function getRakutenRanking(){
   const res = await fetch(url);
   const data = await res.json();
 
+  if (!data.Items || data.Items.length === 0) {
+    console.log("Rakuten API error", data);
+    process.exit(1);
+  }
+
   const item = data.Items[0].Item;
 
   return {
-    image: item.mediumImageUrls[0].imageUrl,
     title: item.itemName,
+    image: item.mediumImageUrls[0].imageUrl.replace("?_ex=128x128", ""),
     url: item.itemUrl
   };
 }
 
-async function sleep(ms){
-  return new Promise(r => setTimeout(r, ms));
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function postInstagram(image_url, caption){
+async function createMedia(image_url, caption) {
 
-  const media = await fetch(
+  const res = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
-      method:"POST",
-      body:new URLSearchParams({
+      method: "POST",
+      body: new URLSearchParams({
         image_url,
         caption,
-        access_token:ACCESS_TOKEN
+        access_token: ACCESS_TOKEN
       })
     }
   );
 
-  const mediaData = await media.json();
+  const data = await res.json();
 
-  if(!mediaData.id){
-    console.log("MEDIA ERROR:",mediaData);
+  if (!data.id) {
+    console.log("MEDIA ERROR", data);
     process.exit(1);
   }
 
-  await sleep(8000);
+  return data.id;
+}
 
-  const publish = await fetch(
+async function publishMedia(creation_id) {
+
+  const res = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
-      method:"POST",
-      body:new URLSearchParams({
-        creation_id:mediaData.id,
-        access_token:ACCESS_TOKEN
+      method: "POST",
+      body: new URLSearchParams({
+        creation_id,
+        access_token: ACCESS_TOKEN
       })
     }
   );
 
-  const publishData = await publish.json();
+  const data = await res.json();
 
-  console.log("POSTED:",publishData);
+  if (!data.id) {
+    console.log("PUBLISH ERROR", data);
+    process.exit(1);
+  }
+
+  console.log("POST SUCCESS", data);
 }
 
-async function run(){
+async function run() {
+
+  console.log("Fetching Rakuten ranking...");
 
   const product = await getRakutenRanking();
+
+  console.log(product);
 
   const caption = `🔥楽天ランキング1位
 
@@ -84,7 +106,11 @@ ${product.url}
 
 #楽天 #楽天市場 #おすすめ商品`;
 
-  await postInstagram(product.image, caption);
+  const creationId = await createMedia(product.image, caption);
+
+  await sleep(8000);
+
+  await publishMedia(creationId);
 }
 
 run();
