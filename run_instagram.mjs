@@ -8,21 +8,23 @@ const IG_ID =
 const ACCESS_TOKEN =
   process.env.FACEBOOK_PAGE_ACCESS_TOKEN || process.env.FB_TOKEN;
 
-async function getRakutenRanking() {
+const RAKUTEN_APP_ID =
+  process.env.RAKUTEN_APP_ID || process.env.RAKUTEN_ACCESS_KEY;
 
-  const res = await fetch("https://ranking.rakuten.co.jp/daily/");
-  const html = await res.text();
+async function getRakutenRanking(){
 
-  const match = html.match(/https:\/\/thumbnail.image.rakuten.co.jp\/.*?jpg/);
+  const url =
+    `https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20170628?applicationId=${RAKUTEN_APP_ID}`;
 
-  if(!match){
-    throw new Error("画像取得失敗");
-  }
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const item = data.Items[0].Item;
 
   return {
-    image: match[0],
-    title: "楽天ランキング商品",
-    url: "https://ranking.rakuten.co.jp/"
+    image: item.mediumImageUrls[0].imageUrl,
+    title: item.itemName,
+    url: item.itemUrl
   };
 }
 
@@ -48,7 +50,7 @@ async function postInstagram(image_url, caption){
 
   if(!mediaData.id){
     console.log("MEDIA ERROR:",mediaData);
-    return;
+    process.exit(1);
   }
 
   await sleep(8000);
@@ -73,7 +75,7 @@ async function run(){
 
   const product = await getRakutenRanking();
 
-  const caption = `🔥楽天ランキング商品
+  const caption = `🔥楽天ランキング1位
 
 ${product.title}
 
