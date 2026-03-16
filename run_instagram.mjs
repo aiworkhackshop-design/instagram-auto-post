@@ -1,138 +1,63 @@
-// run_instagram.mjs
 import fetch from "node-fetch"
 
-// 環境変数を統一（複数のキー名に対応）
-const IG_ACCOUNT_ID =
-  process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID ||
-  process.env.INSTAGRAM_ACCOUNT_ID ||
-  process.env.IG_ACCOUNT_ID ||
-  ""
+const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+const IG_ACCOUNT_ID = process.env.IG_ACCOUNT_ID
 
-const FB_TOKEN =
-  process.env.FACEBOOK_PAGE_ACCESS_TOKEN ||
-  process.env.FB_TOKEN ||
-  ""
+const image_url = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+const caption = "テスト投稿🔥 GitHub自動投稿"
 
-// 環境変数確認ログ
-console.log("=".repeat(60))
-console.log("[run_instagram] Instagram投稿スクリプト開始")
-console.log("=".repeat(60))
-console.log("IG_ACCOUNT_ID:", IG_ACCOUNT_ID || "<NOT SET>")
-console.log("FB_TOKEN:", FB_TOKEN ? "SET" : "MISSING")
-console.log("")
+async function postToInstagram() {
 
-// 環境変数チェック
-if (!IG_ACCOUNT_ID) {
-  console.error("❌ エラー: IG_ACCOUNT_ID が設定されていません")
-  console.error("GitHub Secrets に INSTAGRAM_BUSINESS_ACCOUNT_ID (または IG_ACCOUNT_ID) を設定してください")
-  process.exit(1)
-}
-
-if (!FB_TOKEN) {
-  console.error("❌ エラー: FB_TOKEN が設定されていません")
-  console.error("GitHub Secrets に FACEBOOK_PAGE_ACCESS_TOKEN を設定してください")
-  process.exit(1)
-}
-
-async function run() {
   try {
-    console.log("【1】商品取得")
-    const res = await fetch("https://instagram-auto-post.onrender.com/product")
-    if (!res.ok) {
-      throw new Error(`product fetch failed: ${res.status} ${res.statusText}`)
-    }
-    const product = await res.json()
-    console.log("商品:", product)
 
-    const image = product.image
-    const caption = product.caption
+    // ① media作成
+    const params = new URLSearchParams({
+      image_url: image_url,
+      caption: caption,
+      access_token: ACCESS_TOKEN
+    })
 
-    if (!image) {
-      throw new Error("product.image がありません")
-    }
-
-    console.log("\n【2】media作成")
-    console.log(`API URL: https://graph.facebook.com/v21.0/${IG_ACCOUNT_ID}/media`)
-
-    // ---- 修正点: URLSearchParams (form) で送る ----
-    const params = new URLSearchParams()
-    params.append("image_url", image)
-    if (caption) params.append("caption", caption)
-    params.append("access_token", FB_TOKEN)
-
-    const create = await fetch(
-      `https://graph.facebook.com/v21.0/${IG_ACCOUNT_ID}/media`,
+    const mediaRes = await fetch(
+      `https://graph.facebook.com/v19.0/${IG_ACCOUNT_ID}/media`,
       {
         method: "POST",
         body: params
       }
     )
 
-    const media = await create.json()
-    console.log("media レスポンス:", JSON.stringify(media, null, 2))
+    const mediaData = await mediaRes.json()
 
-    if (media.error) {
-      console.error("❌ media作成エラー:")
-      console.error("  message:", media.error.message)
-      console.error("  type:", media.error.type)
-      console.error("  code:", media.error.code)
-      console.error("  error_subcode:", media.error.error_subcode)
-      console.error("  fbtrace_id:", media.error.fbtrace_id)
+    if (!mediaData.id) {
+      console.log("media作成エラー:", mediaData)
       process.exit(1)
     }
 
-    if (!media.id) {
-      console.error("❌ media.id が返されていません")
-      process.exit(1)
-    }
+    console.log("media id:", mediaData.id)
 
-    console.log("✅ media作成成功:", media.id)
+    // ② publish
+    const publishParams = new URLSearchParams({
+      creation_id: mediaData.id,
+      access_token: ACCESS_TOKEN
+    })
 
-    console.log("\n【3】投稿 publish")
-    console.log(`API URL: https://graph.facebook.com/v21.0/${IG_ACCOUNT_ID}/media_publish`)
-
-    // publish もフォーム送信
-    const params2 = new URLSearchParams()
-    params2.append("creation_id", media.id)
-    params2.append("access_token", FB_TOKEN)
-
-    const publish = await fetch(
-      `https://graph.facebook.com/v21.0/${IG_ACCOUNT_ID}/media_publish`,
+    const publishRes = await fetch(
+      `https://graph.facebook.com/v19.0/${IG_ACCOUNT_ID}/media_publish`,
       {
         method: "POST",
-        body: params2
+        body: publishParams
       }
     )
 
-    const result = await publish.json()
-    console.log("publish レスポンス:", JSON.stringify(result, null, 2))
+    const publishData = await publishRes.json()
 
-    if (result.error) {
-      console.error("❌ publish エラー:")
-      console.error("  message:", result.error.message)
-      console.error("  type:", result.error.type)
-      console.error("  code:", result.error.code)
-      console.error("  error_subcode:", result.error.error_subcode)
-      console.error("  fbtrace_id:", result.error.fbtrace_id)
-      process.exit(1)
-    }
+    console.log("投稿成功:", publishData)
 
-    if (!result.id) {
-      console.error("❌ result.id が返されていません")
-      process.exit(1)
-    }
+  } catch (err) {
 
-    console.log("✅ publish成功:", result.id)
-    console.log("\n" + "=".repeat(60))
-    console.log("✅ Instagram投稿完了")
-    console.log("=".repeat(60))
+    console.log("投稿エラー:", err)
 
-  } catch (error) {
-    console.error("❌ エラーが発生しました:")
-    console.error(error && error.message ? error.message : error)
-    if (error && error.stack) console.error(error.stack)
-    process.exit(1)
   }
+
 }
 
-run()
+postToInstagram()
