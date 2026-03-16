@@ -29,6 +29,9 @@ async function post() {
       throw new Error("media creation failed");
     }
 
+    // これ追加
+    await new Promise(r => setTimeout(r, 5000));
+
     const publish = await fetch(
       `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
       {
