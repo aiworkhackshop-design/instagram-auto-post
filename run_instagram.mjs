@@ -4,11 +4,10 @@ const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID = process.env.IG_ACCOUNT_ID;
 
 const image_url = "https://picsum.photos/800";
-const caption = "テスト投稿";
+const caption = "GitHub自動投稿テスト";
 
 async function post() {
 
-  // media作成
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -22,9 +21,8 @@ async function post() {
   );
 
   const mediaData = await media.json();
-  console.log(mediaData);
+  console.log("MEDIA:", mediaData);
 
-  // 投稿
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
@@ -37,8 +35,7 @@ async function post() {
   );
 
   const publishData = await publish.json();
-  console.log(publishData);
-
+  console.log("PUBLISH:", publishData);
 }
 
-post();
+await post();
