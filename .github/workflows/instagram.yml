@@ -12,19 +12,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - run: npm install node-fetch
+      - name: Install dependencies
+        run: npm install node-fetch
 
-      - run: node run_instagram.mjs
+      - name: Run Instagram Post Script
+        run: node run_instagram.mjs
         env:
-          # 複数のキー名に対応
-          IG_ACCOUNT_ID: <LaTex>${{ secrets.IG_ACCOUNT_ID }}
-          INSTAGRAM_ACCOUNT_ID: $</LaTex>{{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          INSTAGRAM_BUSINESS_ACCOUNT_ID: <LaTex>${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
-          FACEBOOK_PAGE_ACCESS_TOKEN: $</LaTex>{{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
           FB_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
