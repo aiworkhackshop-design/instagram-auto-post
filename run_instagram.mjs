@@ -5,18 +5,19 @@ const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
 async function getRakutenRanking(){
 
-  const res = await fetch("https://ranking.rakuten.co.jp/daily/");
-  const html = await res.text();
+  const res = await fetch("https://ranking.rakuten.co.jp/daily/rss.xml");
+  const xml = await res.text();
 
-  const imgMatch = html.match(/https:\/\/thumbnail.image.rakuten.co.jp\/.*?jpg/);
+  const img = xml.match(/https:\/\/thumbnail.image.rakuten.co.jp\/.*?jpg/);
+  const title = xml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
 
-  if(!imgMatch){
+  if(!img){
     throw new Error("楽天画像取得失敗");
   }
 
   return {
-    image: imgMatch[0],
-    title: "楽天ランキング商品",
+    image: img[0],
+    title: title ? title[1] : "楽天ランキング商品",
     url: "https://ranking.rakuten.co.jp/"
   };
 }
