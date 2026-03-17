@@ -1,0 +1,16 @@
+{
+  "name": "instagram-auto-post",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "post-reel": "npx tsx run_reel.mjs",
+    "post-instagram": "npx tsx run_instagram.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^3.12.7"
+  }
+}
