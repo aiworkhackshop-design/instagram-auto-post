@@ -1,106 +1,86 @@
 import fetch from "node-fetch";
 
-const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-const IG_ID = process.env.IG_ACCOUNT_ID;
+// ===== 設定 =====
+const IG_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
+const TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-
-// 🔥 商品データ（仮：後でAPI化）
+// ===== 投稿データ（例）=====
 const product = {
   title: "今売れてる神アイテム",
-  image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff", // ←あとで楽天に変える
-  url: "https://example.com"
+  image: "https://your-manus-image-url.jpg", // ← ManusのURLそのまま
+  url: "https://your-site.com/product" // ← 実URL入れる
 };
 
-// Cloudinaryアップロード
-async function uploadToCloudinary(imageUrl) {
-  console.log("Cloudinary開始");
+// ===== キャプション生成 =====
+function buildCaption(product) {
+  return `🔥【ガチで売れてる】\n${product.title}
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-    {
-      method: "POST",
-      body: new URLSearchParams({
-        file: imageUrl,
-        upload_preset: "ml_default"
-      })
-    }
-  );
+✔ 今SNSで話題  
+✔ コスパ最強  
+✔ 在庫なくなる前にチェック  
 
-  const data = await res.json();
-  console.log("Cloudinary結果:", data);
+👇 詳細はこちら  
+${product.url}
 
-  if (!data.secure_url) {
-    throw new Error("Cloudinary失敗");
-  }
-
-  return data.secure_url;
+#おすすめ商品 #Amazon #楽天`;
 }
 
-// Instagram投稿
-async function postToInstagram(imageUrl, caption) {
+// ===== Instagram投稿 =====
+async function postToInstagram() {
+  console.log("START");
 
-  const media = await fetch(
+  const caption = buildCaption(product);
+
+  // ① メディア作成
+  const createRes = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
       method: "POST",
-      body: new URLSearchParams({
-        image_url: imageUrl,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image_url: product.image,
         caption: caption,
-        access_token: ACCESS_TOKEN
-      })
+        access_token: TOKEN,
+      }),
     }
   );
 
-  const mediaData = await media.json();
-  console.log("MEDIA:", mediaData);
+  const createData = await createRes.json();
+  console.log("create:", createData);
 
-  if (!mediaData.id) {
-    throw new Error("media作成失敗");
+  if (!createData.id) {
+    throw new Error("メディア作成失敗");
   }
 
-  // 少し待つ
-  await new Promise(r => setTimeout(r, 8000));
-
-  const publish = await fetch(
+  // ② 投稿公開
+  const publishRes = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
       method: "POST",
-      body: new URLSearchParams({
-        creation_id: mediaData.id,
-        access_token: ACCESS_TOKEN
-      })
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        creation_id: createData.id,
+        access_token: TOKEN,
+      }),
     }
   );
 
-  const publishData = await publish.json();
-  console.log("PUBLISH:", publishData);
+  const publishData = await publishRes.json();
+  console.log("publish:", publishData);
+
+  if (!publishData.id) {
+    throw new Error("投稿失敗");
+  }
+
+  console.log("✅ 投稿完了");
 }
 
-// 実行
-async function run() {
-  console.log("START");
-
-  // ① CloudinaryでURL生成
-  const imageUrl = await uploadToCloudinary(product.image);
-
-  // ② キャプション生成（ここ重要）
-  const caption = `
-🔥【ガチで売れてる】
-${product.title}
-
-✔ 今SNSで話題
-✔ コスパ最強
-✔ 在庫なくなる前にチェック
-
-👇詳細はプロフィールから
-${product.url}
-
-#おすすめ商品 #Amazon #楽天
-`;
-
-  // ③ 投稿
-  await postToInstagram(imageUrl, caption);
-}
-
-run();
+// ===== 実行 =====
+postToInstagram().catch((e) => {
+  console.error("❌ エラー:", e.message);
+  process.exit(1);
+});
