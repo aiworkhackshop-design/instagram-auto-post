@@ -1,24 +1,44 @@
 import fetch from "node-fetch";
+import FormData from "form-data";
 
 const IG_ID = process.env.IG_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 
-// ★ここ重要（必ず直URL画像にする）
-const image_url = "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg";
-
-const caption = `🔥売れてる商品
-
-詳細はプロフィールから👇
-
-#おすすめ商品 #Amazon #楽天`;
+// ★テスト（後で楽天に変える）
+const IMAGE_SOURCE = "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg";
 
 async function sleep(ms){
   return new Promise(r=>setTimeout(r,ms));
 }
 
-async function post(){
+// ① Cloudinaryに直接アップ
+async function uploadToCloudinary(){
 
-  console.log("POST START");
+  const form = new FormData();
+  form.append("file", IMAGE_SOURCE);
+  form.append("upload_preset", "ml_default");
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    {
+      method: "POST",
+      body: form
+    }
+  );
+
+  const data = await res.json();
+  console.log("CLOUDINARY:", data);
+
+  if(!data.secure_url){
+    throw new Error("Cloudinary失敗");
+  }
+
+  return data.secure_url;
+}
+
+// ② Instagram投稿
+async function postInstagram(image_url){
 
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
@@ -26,7 +46,7 @@ async function post(){
       method:"POST",
       body:new URLSearchParams({
         image_url,
-        caption,
+        caption: "🔥売れてる商品\n\nプロフィールから👇",
         access_token: ACCESS_TOKEN
       })
     }
@@ -36,8 +56,7 @@ async function post(){
   console.log("MEDIA:", mediaData);
 
   if(!mediaData.id){
-    console.error("MEDIA ERROR");
-    process.exit(1);
+    throw new Error("MEDIA失敗");
   }
 
   await sleep(8000);
@@ -53,14 +72,18 @@ async function post(){
     }
   );
 
-  const publishData = await publish.json();
-  console.log("PUBLISH:", publishData);
-
-  if(!publishData.id){
-    process.exit(1);
-  }
-
-  console.log("SUCCESS");
+  console.log("PUBLISH:", await publish.json());
 }
 
-post();
+async function run(){
+
+  console.log("① Cloudinaryアップ");
+  const url = await uploadToCloudinary();
+
+  console.log("② Instagram投稿");
+  await postInstagram(url);
+
+  console.log("✅ 完了");
+}
+
+run();
