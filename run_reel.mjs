@@ -3,12 +3,12 @@ import fetch from "node-fetch";
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID = process.env.IG_ACCOUNT_ID;
 
-// 仮動画（まずテスト用）
+// テスト用動画
 const video_url = "https://samplelib.com/lib/preview/mp4/sample-5s.mp4";
 
 const caption = "🔥おすすめ商品（リールテスト）";
 
-async function sleep(ms){
+function sleep(ms){
   return new Promise(r => setTimeout(r, ms));
 }
 
@@ -16,13 +16,12 @@ async function postReel(){
 
   console.log("START REEL");
 
-  // ① リール作成
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
       method:"POST",
       body:new URLSearchParams({
-        media_type: "REELS",   // ←ここ重要
+        media_type: "REELS",
         video_url: video_url,
         caption: caption,
         access_token: ACCESS_TOKEN
@@ -39,7 +38,6 @@ async function postReel(){
 
   await sleep(10000);
 
-  // ② 公開
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
