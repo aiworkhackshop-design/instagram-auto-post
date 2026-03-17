@@ -3,14 +3,27 @@ import fetch from "node-fetch";
 const IG_ID = process.env.IG_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-const image_url =
-"https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=1080&q=80";
+const products = [
+  {
+    image: "https://m.media-amazon.com/images/I/61LtuGzXeaL._AC_SL1500_.jpg",
+    title: "Anker モバイルバッテリー",
+    url: "https://amzn.to/"
+  },
+  {
+    image: "https://m.media-amazon.com/images/I/71lJkA6bGEL._AC_SL1500_.jpg",
+    title: "Fire TV Stick",
+    url: "https://amzn.to/"
+  },
+  {
+    image: "https://m.media-amazon.com/images/I/61CGHv6kmWL._AC_SL1500_.jpg",
+    title: "Echo Dot",
+    url: "https://amzn.to/"
+  }
+];
 
-const caption = `🔥売れてる商品紹介
-
-詳しくはプロフィールリンク👇
-
-#おすすめ商品 #Amazon #楽天`;
+function getRandomProduct(){
+  return products[Math.floor(Math.random()*products.length)];
+}
 
 async function sleep(ms){
   return new Promise(r=>setTimeout(r,ms));
@@ -18,12 +31,23 @@ async function sleep(ms){
 
 async function post(){
 
+  const p = getRandomProduct();
+
+  const caption = `🔥売れてる商品紹介
+
+${p.title}
+
+詳しくはこちら👇
+${p.url}
+
+#Amazon #おすすめ商品 #ガジェット`;
+
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
       method:"POST",
       body:new URLSearchParams({
-        image_url,
+        image_url:p.image,
         caption,
         access_token:ACCESS_TOKEN
       })
@@ -33,7 +57,7 @@ async function post(){
   const mediaData = await media.json();
 
   if(!mediaData.id){
-    console.log("MEDIA ERROR:",mediaData);
+    console.log(mediaData);
     process.exit(1);
   }
 
