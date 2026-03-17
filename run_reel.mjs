@@ -1,8 +1,12 @@
 import fetch from "node-fetch";
-import upload from "./upload.js";
 
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-const IG_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
+const IG_ID = process.env.IG_ACCOUNT_ID;
+
+// 仮動画（まずテスト用）
+const video_url = "https://samplelib.com/lib/preview/mp4/sample-5s.mp4";
+
+const caption = "🔥おすすめ商品（リールテスト）";
 
 async function sleep(ms){
   return new Promise(r => setTimeout(r, ms));
@@ -10,18 +14,15 @@ async function sleep(ms){
 
 async function postReel(){
 
-  // ① 動画URL取得
-  const video_url = await upload();
+  console.log("START REEL");
 
-  const caption = "🔥今バズってる便利グッズ\nプロフからチェック👇";
-
-  // ② メディア作成
+  // ① リール作成
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
       method:"POST",
       body:new URLSearchParams({
-        media_type: "VIDEO",
+        media_type: "REELS",   // ←ここ重要
         video_url: video_url,
         caption: caption,
         access_token: ACCESS_TOKEN
@@ -30,11 +31,15 @@ async function postReel(){
   );
 
   const mediaData = await media.json();
-  console.log(mediaData);
+  console.log("MEDIA:", mediaData);
 
-  await sleep(15000);
+  if(!mediaData.id){
+    throw new Error("メディア作成失敗");
+  }
 
-  // ③ 投稿
+  await sleep(10000);
+
+  // ② 公開
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
@@ -47,7 +52,7 @@ async function postReel(){
   );
 
   const publishData = await publish.json();
-  console.log(publishData);
+  console.log("PUBLISH:", publishData);
 }
 
 postReel();
