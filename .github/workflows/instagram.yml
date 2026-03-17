@@ -21,18 +21,11 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install node-fetch
+        run: npm install node-fetch form-data
 
-      - name: Run Instagram Post Script
+      - name: Run Instagram script
         run: node run_instagram.mjs
         env:
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
-          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
-
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-          FB_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-
-          RAKUTEN_APP_ID: ${{ secrets.RAKUTEN_APP_ID }}
-          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
-        
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
