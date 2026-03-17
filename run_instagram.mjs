@@ -1,55 +1,52 @@
 import fetch from "node-fetch";
-import FormData from "form-data";
 
-const IG_ID = process.env.IG_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const IG_ID = process.env.IG_ACCOUNT_ID;
+
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 
-const IMAGE_SOURCE = "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg";
+// 🔥 商品データ（仮：後でAPI化）
+const product = {
+  title: "今売れてる神アイテム",
+  image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff", // ←あとで楽天に変える
+  url: "https://example.com"
+};
 
-async function sleep(ms){
-  return new Promise(r=>setTimeout(r,ms));
-}
-
-// Cloudinary
-async function uploadToCloudinary(){
-
+// Cloudinaryアップロード
+async function uploadToCloudinary(imageUrl) {
   console.log("Cloudinary開始");
-
-  const form = new FormData();
-  form.append("file", IMAGE_SOURCE);
-  form.append("upload_preset", "ml_default");
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
     {
       method: "POST",
-      body: form
+      body: new URLSearchParams({
+        file: imageUrl,
+        upload_preset: "ml_default"
+      })
     }
   );
 
   const data = await res.json();
   console.log("Cloudinary結果:", data);
 
-  if(!data.secure_url){
+  if (!data.secure_url) {
     throw new Error("Cloudinary失敗");
   }
 
   return data.secure_url;
 }
 
-// Instagram
-async function postInstagram(image_url){
-
-  console.log("Instagram開始");
+// Instagram投稿
+async function postToInstagram(imageUrl, caption) {
 
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
-      method:"POST",
-      body:new URLSearchParams({
-        image_url,
-        caption: "🔥売れてる商品",
+      method: "POST",
+      body: new URLSearchParams({
+        image_url: imageUrl,
+        caption: caption,
         access_token: ACCESS_TOKEN
       })
     }
@@ -58,17 +55,18 @@ async function postInstagram(image_url){
   const mediaData = await media.json();
   console.log("MEDIA:", mediaData);
 
-  if(!mediaData.id){
-    throw new Error("MEDIA失敗");
+  if (!mediaData.id) {
+    throw new Error("media作成失敗");
   }
 
-  await sleep(8000);
+  // 少し待つ
+  await new Promise(r => setTimeout(r, 8000));
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
-      method:"POST",
-      body:new URLSearchParams({
+      method: "POST",
+      body: new URLSearchParams({
         creation_id: mediaData.id,
         access_token: ACCESS_TOKEN
       })
@@ -79,17 +77,30 @@ async function postInstagram(image_url){
   console.log("PUBLISH:", publishData);
 }
 
-async function run(){
-
+// 実行
+async function run() {
   console.log("START");
 
-  const url = await uploadToCloudinary();
+  // ① CloudinaryでURL生成
+  const imageUrl = await uploadToCloudinary(product.image);
 
-  console.log("URL:", url);
+  // ② キャプション生成（ここ重要）
+  const caption = `
+🔥【ガチで売れてる】
+${product.title}
 
-  await postInstagram(url);
+✔ 今SNSで話題
+✔ コスパ最強
+✔ 在庫なくなる前にチェック
 
-  console.log("完了");
+👇詳細はプロフィールから
+${product.url}
+
+#おすすめ商品 #Amazon #楽天
+`;
+
+  // ③ 投稿
+  await postToInstagram(imageUrl, caption);
 }
 
 run();
