@@ -1,29 +1,23 @@
-name: Instagram Reel Daily
-
-on:
-  schedule:
-    - cron: "0 3 * * *"  # 毎日 12:00 JST
-  workflow_dispatch:
-
+# 例: .github/workflows/instagram.yml の relevant part
 jobs:
-  reel:
+  instagram:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install only required node packages
+        run: npm install node-fetch form-data
 
-      - name: Run Reel Script
-        run: node --loader tsx/esm run_reel.mjs
+      - name: Run Instagram script
+        run: node run_instagram.mjs
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
