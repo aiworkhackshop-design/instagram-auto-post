@@ -4,27 +4,21 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'
-    - cron: '0 6 * * *'
-    - cron: '0 11 * * *'
 
 jobs:
   post:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install node-fetch form-data
+      - run: npm install node-fetch
 
-      - name: Run Instagram script
-        run: node run_instagram.mjs
+      - run: node run_instagram.mjs
         env:
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
