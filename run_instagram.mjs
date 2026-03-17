@@ -3,16 +3,14 @@ import fetch from "node-fetch";
 const IG_ID = process.env.IG_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-// ★ 自分のGitHub画像URLにする
-const image_url = "https://raw.githubusercontent.com/xxxx/xxxx/main/images/product.jpg";
+// ★ 確実に通る画像
+const image_url = "https://picsum.photos/1080/1080";
 
-const caption = `🔥売れてる商品紹介
+const caption = `🔥テスト投稿
 
-超人気商品
+自動投稿確認
 
-詳しくはプロフィール👇
-
-#おすすめ商品 #Amazon`;
+#テスト`;
 
 async function sleep(ms){
   return new Promise(r=>setTimeout(r,ms));
@@ -38,6 +36,8 @@ async function post(){
     console.log(mediaData);
     process.exit(1);
   }
+
+  console.log("MEDIA OK");
 
   await sleep(8000);
 
