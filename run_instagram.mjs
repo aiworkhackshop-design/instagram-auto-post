@@ -1,57 +1,90 @@
 import fetch from "node-fetch";
 
-const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-const IG_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
+const IG_ID =
+  process.env.IG_ACCOUNT_ID ||
+  process.env.INSTAGRAM_ACCOUNT_ID ||
+  process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
 
-const video_url = "https://your-video-url.mp4"; // ←ここ重要
-const caption = "🔥今バズってる便利グッズ\n\nプロフからチェック👇";
+const ACCESS_TOKEN =
+  process.env.FACEBOOK_PAGE_ACCESS_TOKEN || process.env.FB_TOKEN;
+
+const RAKUTEN_APP_ID =
+  process.env.RAKUTEN_APP_ID || process.env.RAKUTEN_ACCESS_KEY;
+
+async function getRakutenRanking() {
+
+  const url =
+    `https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20170628?applicationId=${RAKUTEN_APP_ID}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const item = data.Items[0].Item;
+
+  return {
+    title: item.itemName,
+    image: item.mediumImageUrls[0].imageUrl.replace("?_ex=128x128",""),
+    url: item.itemUrl
+  };
+}
 
 async function sleep(ms){
   return new Promise(r => setTimeout(r, ms));
 }
 
-async function postReel(){
+async function postImage(image_url, caption){
 
-  console.log("START REEL");
-
-  // ① メディア作成（動画）
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
       method:"POST",
       body:new URLSearchParams({
-        media_type: "VIDEO",
-        video_url: video_url,
-        caption: caption,
-        access_token: ACCESS_TOKEN
+        image_url,
+        caption,
+        access_token:ACCESS_TOKEN
       })
     }
   );
 
   const mediaData = await media.json();
-  console.log("MEDIA:", mediaData);
 
   if(!mediaData.id){
-    throw new Error("メディア作成失敗");
+    console.log(mediaData);
+    process.exit(1);
   }
 
-  // ② 待機（重要）
-  await sleep(15000);
+  await sleep(8000);
 
-  // ③ 投稿
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
       method:"POST",
       body:new URLSearchParams({
-        creation_id: mediaData.id,
-        access_token: ACCESS_TOKEN
+        creation_id:mediaData.id,
+        access_token:ACCESS_TOKEN
       })
     }
   );
 
   const publishData = await publish.json();
-  console.log("PUBLISH:", publishData);
+
+  console.log("POST SUCCESS:", publishData);
 }
 
-postReel();
+async function run(){
+
+  const product = await getRakutenRanking();
+
+  const caption = `🔥楽天ランキング1位
+
+${product.title}
+
+詳しくはこちら👇
+${product.url}
+
+#楽天 #楽天市場`;
+
+  await postImage(product.image, caption);
+}
+
+run();
