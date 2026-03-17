@@ -17,11 +17,10 @@ jobs:
       - name: Install system deps (ffmpeg)
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      # 応急で package.json 作る（無い環境でも動かす）
       - name: Setup Node project
         run: |
           npm init -y
-          npm install dotenv tsx
+          npm install dotenv tsx node-fetch form-data
 
       - name: Run reel script
         run: node --import tsx run_reel.mjs
