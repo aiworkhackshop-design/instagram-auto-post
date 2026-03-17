@@ -1,12 +1,26 @@
 import fetch from "node-fetch";
+import fs from "fs";
 
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID = process.env.IG_ACCOUNT_ID;
 
-// テスト用動画（確実に通る）
-const video_url = "https://www.w3schools.com/html/mov_bbb.mp4";
+// 商品読み込み
+const products = JSON.parse(fs.readFileSync("./products.json", "utf-8"));
+const product = products[0];
 
-const caption = "🔥おすすめ商品（リールテスト）";
+// ⚠️ 仮：画像を動画として使う（疑似リール）
+const video_url = product.image; 
+
+const caption = `
+🔥 今売れてる商品
+
+${product.title}
+
+👇 詳細はこちら
+${product.url}
+
+#Amazon #おすすめ #便利グッズ
+`;
 
 function sleep(ms){
   return new Promise(r => setTimeout(r, ms));
@@ -16,7 +30,7 @@ async function postReel(){
 
   console.log("START REEL");
 
-  // ① リール作成
+  // リール作成
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -37,11 +51,10 @@ async function postReel(){
     throw new Error("メディア作成失敗");
   }
 
-  // 🔥 ここ超重要（待機）
   console.log("WAITING...");
-  await sleep(30000); // 30秒待つ
+  await sleep(30000);
 
-  // ② 投稿
+  // 投稿
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
