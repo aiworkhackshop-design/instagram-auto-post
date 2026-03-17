@@ -1,83 +1,57 @@
 import fetch from "node-fetch";
 
-// 🔥 強制的に全部拾う
-const IG_ID =
-  process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID ||
-  process.env.IG_ACCOUNT_ID ||
-  "17841445883155732"; // ← 最後の保険
+const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const IG_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
 
-const TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const video_url = "https://your-video-url.mp4"; // ←ここ重要
+const caption = "🔥今バズってる便利グッズ\n\nプロフからチェック👇";
 
-console.log("IG_ID:", IG_ID);
-console.log("TOKEN存在:", !!TOKEN);
-
-// ===== 投稿データ =====
-const product = {
-  title: "テスト投稿",
-  image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-  url: "https://ai.workhack.shop"
-};
-
-function buildCaption(product) {
-  return `🔥テスト投稿
-
-${product.title}
-
-${product.url}`;
+async function sleep(ms){
+  return new Promise(r => setTimeout(r, ms));
 }
 
-async function postToInstagram() {
-  console.log("START");
+async function postReel(){
 
-  const caption = buildCaption(product);
+  console.log("START REEL");
 
-  // 🔥 form-dataで送る（これ重要）
-  const params = new URLSearchParams();
-  params.append("image_url", product.image);
-  params.append("caption", caption);
-  params.append("access_token", TOKEN);
-
-  const createRes = await fetch(
+  // ① メディア作成（動画）
+  const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
-      method: "POST",
-      body: params,
+      method:"POST",
+      body:new URLSearchParams({
+        media_type: "VIDEO",
+        video_url: video_url,
+        caption: caption,
+        access_token: ACCESS_TOKEN
+      })
     }
   );
 
-  const createData = await createRes.json();
-  console.log("create:", createData);
+  const mediaData = await media.json();
+  console.log("MEDIA:", mediaData);
 
-  if (!createData.id) {
+  if(!mediaData.id){
     throw new Error("メディア作成失敗");
   }
 
-  // 少し待つ
-  await new Promise((r) => setTimeout(r, 8000));
+  // ② 待機（重要）
+  await sleep(15000);
 
-  const publishParams = new URLSearchParams();
-  publishParams.append("creation_id", createData.id);
-  publishParams.append("access_token", TOKEN);
-
-  const publishRes = await fetch(
+  // ③ 投稿
+  const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
-      method: "POST",
-      body: publishParams,
+      method:"POST",
+      body:new URLSearchParams({
+        creation_id: mediaData.id,
+        access_token: ACCESS_TOKEN
+      })
     }
   );
 
-  const publishData = await publishRes.json();
-  console.log("publish:", publishData);
-
-  if (!publishData.id) {
-    throw new Error("投稿失敗");
-  }
-
-  console.log("✅ 投稿成功");
+  const publishData = await publish.json();
+  console.log("PUBLISH:", publishData);
 }
 
-postToInstagram().catch((e) => {
-  console.error("❌ エラー:", e.message);
-  process.exit(1);
-});
+postReel();
