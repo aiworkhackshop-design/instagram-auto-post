@@ -1,3 +1,13 @@
+import fetch from "node-fetch";
+
+const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const IG_ID = process.env.IG_ACCOUNT_ID;
+
+// テスト用動画（確実に通る）
+const video_url = "https://www.w3schools.com/html/mov_bbb.mp4";
+
+const caption = "🔥おすすめ商品（リールテスト）";
+
 function sleep(ms){
   return new Promise(r => setTimeout(r, ms));
 }
@@ -6,7 +16,7 @@ async function postReel(){
 
   console.log("START REEL");
 
-  // ① メディア作成
+  // ① リール作成
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -27,11 +37,11 @@ async function postReel(){
     throw new Error("メディア作成失敗");
   }
 
-  // 🔥 ここが重要（待つ）
+  // 🔥 ここ超重要（待機）
   console.log("WAITING...");
-  await sleep(20000); // ←20秒待つ
+  await sleep(30000); // 30秒待つ
 
-  // ② 公開
+  // ② 投稿
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
     {
