@@ -1,4 +1,4 @@
-name: Reel Auto
+name: Reel Auto Daily
 
 on:
   schedule:
@@ -10,23 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm install node-fetch form-data
 
       - name: Install ffmpeg
-        run: sudo apt-get install -y ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Generate video
         run: node generate_video.js
 
-      - name: Post Reel
+      - name: Upload + Post Reel
         run: node run_reel.mjs
         env:
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
