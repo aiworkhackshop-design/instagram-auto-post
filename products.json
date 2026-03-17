@@ -1,13 +1,12 @@
-{
-  "name": "instagram-auto-post",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "post-reel": "tsx run_reel.mjs"
+[
+  {
+    "title": "神コスパ ワイヤレスイヤホン",
+    "image": "https://picsum.photos/1080/1920",
+    "url": "https://example.com"
   },
-  "dependencies": {
-    "node-fetch": "^3.3.1",
-    "form-data": "^4.0.0",
-    "tsx": "^3.12.7"
+  {
+    "title": "便利すぎるスマホスタンド",
+    "image": "https://picsum.photos/1080/1921",
+    "url": "https://example.com"
   }
-}
+]
