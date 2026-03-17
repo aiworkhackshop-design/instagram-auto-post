@@ -1,14 +1,12 @@
-name: Post to Instagram
+name: Instagram Reel Daily
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
-    - cron: '0 6 * * *'
-    - cron: '0 11 * * *'
+    - cron: "0 3 * * *"  # 毎日 12:00 JST
+  workflow_dispatch:
 
 jobs:
-  post:
+  reel:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,16 +16,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 20
 
-      - name: Install deps
-        run: npm install node-fetch
+      - name: Install dependencies
+        run: npm install
 
-      - name: Run script
-        run: node run_instagram.mjs
+      - name: Run Reel Script
+        run: node --loader tsx/esm run_reel.mjs
         env:
-          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-
-          # 念のため両方渡す（コード側で拾う）
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
-          IG_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
