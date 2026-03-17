@@ -13,25 +13,20 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
+          # cache を外しました（ロックファイルが無い場合はこちら）
+          # cache: 'npm'
 
       - name: Install system deps (ffmpeg)
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Install npm dependencies
-        run: npm ci
+        run: npm install
 
-      # 通常 run_reel.mjs は tsx 経由で実行する想定なので npx tsx を使う
       - name: Run reel script
         run: npx -y tsx run_reel.mjs
         env:
-          # run_reel.mjs が期待する環境変数名に合わせること（下は推奨）
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-          BUILT_IN_FORGE_API_URL: ${{ secrets.BUILT_IN_FORGE_API_URL }}
-          BUILT_IN_FORGE_API_KEY: ${{ secrets.BUILT_IN_FORGE_API_KEY }}
-          # optional (もしプロジェクトで使うなら)
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
