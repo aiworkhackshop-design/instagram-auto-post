@@ -13,17 +13,18 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-          # cache を外しました（ロックファイルが無い場合はこちら）
-          # cache: 'npm'
 
       - name: Install system deps (ffmpeg)
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Install npm dependencies
-        run: npm install
+      # 応急で package.json 作る（無い環境でも動かす）
+      - name: Setup Node project
+        run: |
+          npm init -y
+          npm install dotenv tsx
 
       - name: Run reel script
-        run: npx -y tsx run_reel.mjs
+        run: node --import tsx run_reel.mjs
         env:
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
