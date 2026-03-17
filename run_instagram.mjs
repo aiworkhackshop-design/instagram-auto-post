@@ -3,30 +3,20 @@ import fetch from "node-fetch";
 const IG_ID = process.env.IG_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-async function getRakutenRanking(){
+const image_url =
+"https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=1080&q=80";
 
-  const res = await fetch("https://ranking.rakuten.co.jp/daily/rss.xml");
-  const xml = await res.text();
+const caption = `🔥売れてる商品紹介
 
-  const img = xml.match(/https:\/\/thumbnail.image.rakuten.co.jp\/.*?jpg/);
-  const title = xml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
+詳しくはプロフィールリンク👇
 
-  if(!img){
-    throw new Error("楽天画像取得失敗");
-  }
-
-  return {
-    image: img[0],
-    title: title ? title[1] : "楽天ランキング商品",
-    url: "https://ranking.rakuten.co.jp/"
-  };
-}
+#おすすめ商品 #Amazon #楽天`;
 
 async function sleep(ms){
   return new Promise(r=>setTimeout(r,ms));
 }
 
-async function postInstagram(image_url, caption){
+async function post(){
 
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
@@ -43,7 +33,7 @@ async function postInstagram(image_url, caption){
   const mediaData = await media.json();
 
   if(!mediaData.id){
-    console.log(mediaData);
+    console.log("MEDIA ERROR:",mediaData);
     process.exit(1);
   }
 
@@ -63,20 +53,4 @@ async function postInstagram(image_url, caption){
   console.log(await publish.json());
 }
 
-async function run(){
-
-  const product = await getRakutenRanking();
-
-  const caption = `🔥楽天ランキング商品
-
-${product.title}
-
-詳しくはこちら👇
-${product.url}
-
-#楽天ランキング #おすすめ商品`;
-
-  await postInstagram(product.image, caption);
-}
-
-run();
+post();
