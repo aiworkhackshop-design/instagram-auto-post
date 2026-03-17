@@ -1,4 +1,4 @@
-name: Reel Auto Daily
+name: Reel Test
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install node-fetch
+      - name: Install node-fetch only
         run: npm install node-fetch
 
       - name: Run Reel Test
