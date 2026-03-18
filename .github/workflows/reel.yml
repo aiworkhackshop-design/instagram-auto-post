@@ -1,7 +1,9 @@
-name: Post Reels
+name: Post Reel
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
 
 jobs:
   reel:
@@ -12,21 +14,19 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install system deps (ffmpeg)
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Setup Node project
+      # 🔥 ここ重要
+      - name: Install ffmpeg + Japanese font
         run: |
-          npm init -y
-          npm install dotenv tsx node-fetch form-data
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-cjk
 
-      - name: Run reel script
+      - run: npm install
+
+      - name: Run Reel
         run: node --import tsx run_reel.mjs
         env:
-          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
