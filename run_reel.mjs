@@ -33,7 +33,6 @@ function getProduct() {
   }
 
   const valid = products.filter(p => p.image && p.title && p.url);
-
   if (valid.length === 0) {
     throw new Error("有効な商品なし");
   }
@@ -43,8 +42,6 @@ function getProduct() {
 
 // ===== 画像DL =====
 async function downloadImage(url) {
-  console.log("DOWNLOAD:", url);
-
   const res = await fetch(url);
   if (!res.ok) throw new Error("画像取得失敗");
 
@@ -52,14 +49,14 @@ async function downloadImage(url) {
   fs.writeFileSync(imagePath, Buffer.from(buffer));
 }
 
-// ===== 🔥 動画生成（最強版） =====
+// ===== 🔥 動画生成（日本語完全対応） =====
 function generateVideo(product) {
   console.log("GENERATE VIDEO");
 
   const safeTitle = product.title
     .replace(/'/g, "")
     .replace(/:/g, "")
-    .slice(0, 30); // 長すぎ防止
+    .slice(0, 25);
 
   execSync(`
     ffmpeg -y -loop 1 -i ${imagePath} \
@@ -69,14 +66,14 @@ function generateVideo(product) {
 
     drawbox=x=0:y=0:w=1080:h=420:color=black@0.6:t=fill,
 
-    drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
+    drawtext=fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc:
     text='【99%が知らない】':
     fontcolor=yellow:
     fontsize=80:
     x=(w-text_w)/2:
     y=120,
 
-    drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
+    drawtext=fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc:
     text='${safeTitle}':
     fontcolor=white:
     fontsize=60:
@@ -91,8 +88,6 @@ function generateVideo(product) {
 
 // ===== Cloudinary =====
 async function uploadToCloudinary() {
-  console.log("UPLOAD CLOUDINARY");
-
   const form = new FormData();
   form.append("file", fs.createReadStream(videoPath));
   form.append("upload_preset", "ml_default");
@@ -118,14 +113,11 @@ async function uploadToCloudinary() {
 // ===== 処理待ち =====
 async function waitForMedia(mediaId) {
   for (let i = 0; i < 12; i++) {
-    console.log("WAITING...");
-
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
     );
 
     const data = await res.json();
-    console.log("STATUS:", data);
 
     if (data.status_code === "FINISHED") return;
 
@@ -148,8 +140,6 @@ ${product.url}
 #Amazon #おすすめ #便利グッズ #ガジェット
 `;
 
-  console.log("CREATE MEDIA");
-
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -164,15 +154,9 @@ ${product.url}
   );
 
   const mediaData = await media.json();
-  console.log("MEDIA:", mediaData);
-
-  if (!mediaData.id) {
-    throw new Error("メディア作成失敗");
-  }
+  if (!mediaData.id) throw new Error("メディア作成失敗");
 
   await waitForMedia(mediaData.id);
-
-  console.log("PUBLISH");
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
@@ -186,35 +170,25 @@ ${product.url}
   );
 
   const publishData = await publish.json();
-  console.log("RESULT:", publishData);
-
-  if (!publishData.id) {
-    throw new Error("投稿失敗");
-  }
+  if (!publishData.id) throw new Error("投稿失敗");
 }
 
 // ===== 実行 =====
 async function run() {
   try {
-    console.log("START");
-
     assertEnv();
 
     const product = getProduct();
-    console.log("PRODUCT:", product);
 
     await downloadImage(product.image);
     generateVideo(product);
 
     const video_url = await uploadToCloudinary();
-    console.log("VIDEO:", video_url);
-
     await postReel(product, video_url);
 
     console.log("SUCCESS 🎉");
-
   } catch (err) {
-    console.error("ERROR:", err.message);
+    console.error(err.message);
     process.exit(1);
   }
 }
