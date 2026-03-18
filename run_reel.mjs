@@ -1,7 +1,7 @@
 import fs from "fs";
 import { execSync } from "child_process";
 
-// ===== ENV =====！
+// ===== ENV =====
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID =
   process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || process.env.IG_ACCOUNT_ID;
@@ -108,7 +108,7 @@ function generateVideo(product) {
   `);
 }
 
-// ===== Cloudinary（form-data不要版） =====
+// ===== Cloudinary（完全修正版） =====
 async function uploadToCloudinary() {
   console.log("UPLOAD CLOUDINARY");
 
@@ -124,15 +124,17 @@ async function uploadToCloudinary() {
       },
       body: JSON.stringify({
         file: `data:video/mp4;base64,${base64}`,
-        upload_preset: "ml_default"
+        upload_preset: "ml_default",
+        public_id: `reel_${Date.now()}`,
+        resource_type: "video"
       })
     }
   );
 
   const data = await res.json();
+  console.log("CLOUDINARY:", data);
 
   if (!data.secure_url) {
-    console.error(data);
     throw new Error("Cloudinary失敗");
   }
 
@@ -142,11 +144,14 @@ async function uploadToCloudinary() {
 // ===== ステータス待機 =====
 async function waitForMedia(mediaId) {
   for (let i = 0; i < 10; i++) {
+    console.log("CHECK STATUS...");
+
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
     );
 
     const data = await res.json();
+    console.log("STATUS:", data);
 
     if (data.status_code === "FINISHED") return;
 
@@ -173,6 +178,8 @@ ${product.url}
 #Amazon #便利グッズ #買ってよかった
 `;
 
+  console.log("CREATE MEDIA");
+
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -187,9 +194,13 @@ ${product.url}
   );
 
   const mediaData = await media.json();
+  console.log("MEDIA:", mediaData);
+
   if (!mediaData.id) throw new Error("メディア作成失敗");
 
   await waitForMedia(mediaData.id);
+
+  console.log("PUBLISH");
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
@@ -203,6 +214,8 @@ ${product.url}
   );
 
   const publishData = await publish.json();
+  console.log("PUBLISH:", publishData);
+
   if (!publishData.id) throw new Error("投稿失敗");
 }
 
