@@ -1,7 +1,7 @@
 import fs from "fs";
 import { execSync } from "child_process";
 
-// ===== ENV =====
+// ===== ENV =====！
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID =
   process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || process.env.IG_ACCOUNT_ID;
