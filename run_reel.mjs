@@ -50,7 +50,7 @@ async function downloadImage(url) {
   fs.writeFileSync(imagePath, Buffer.from(buffer));
 }
 
-// ===== 動画生成（テキスト付き） =====
+// ===== 🔥 動画生成（完全版） =====
 function generateVideo(product) {
   console.log("GENERATE VIDEO");
 
@@ -58,11 +58,24 @@ function generateVideo(product) {
 
   execSync(`
     ffmpeg -y -loop 1 -i ${imagePath} \
-    -vf "scale=1080:1920,
-    drawtext=text='これ知らないと損':fontcolor=white:fontsize=80:x=(w-text_w)/2:y=200,
-    drawtext=text='${safeTitle}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=350,
-    format=yuv420p" \
-    -t 6 -r 30 -c:v libx264 ${videoPath}
+    -vf "
+    scale=1080:1920,
+    drawbox=x=0:y=0:w=1080:h=400:color=black@0.4:t=fill,
+    drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
+    text='これ知らないと損':
+    fontcolor=white:
+    fontsize=80:
+    x=(w-text_w)/2:
+    y=120,
+    drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
+    text='${safeTitle}':
+    fontcolor=white:
+    fontsize=60:
+    x=(w-text_w)/2:
+    y=260,
+    format=yuv420p
+    " \
+    -t 6 -r 30 -c:v libx264 -pix_fmt yuv420p ${videoPath}
   `);
 }
 
@@ -90,7 +103,7 @@ async function uploadToCloudinary() {
   return data.secure_url;
 }
 
-// ===== 🔥 これが今回の最重要 =====
+// ===== 処理待ち（最重要） =====
 async function waitForMedia(mediaId) {
   for (let i = 0; i < 10; i++) {
     console.log("CHECK STATUS...");
@@ -148,7 +161,6 @@ ${product.url}
     throw new Error("メディア作成失敗");
   }
 
-  // 👇ここが超重要（固定待機じゃなくステータス待ち）
   await waitForMedia(mediaData.id);
 
   console.log("PUBLISH");
