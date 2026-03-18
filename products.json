@@ -1,12 +1,18 @@
 [
   {
     "title": "ワイヤレスイヤホン Bluetooth5.3",
-    "image": "https://m.media-amazon.com/images/I/61SUj2aKoEL._AC_SL1500_.jpg",
-    "url": "https://www.amazon.co.jp/dp/B0XXXXXXX"
+    "image": "https://tshop.r10s.jp/anker/cabinet/images/anker_2/a1637_normal.jpg",
+    "url": "https://www.amazon.co.jp/dp/B0CP4RHK7X",
+    "asin": "B0CP4RHK7X",
+    "price": "¥5,990",
+    "rating": 4.4
   },
   {
-    "title": "スマホスタンド 折りたたみ式",
-    "image": "https://m.media-amazon.com/images/I/71abcxyz._AC_SL1500_.jpg",
-    "url": "https://www.amazon.co.jp/dp/B0YYYYYYY"
+    "title": "USB-C ハブ 7-in-1",
+    "image": "https://tshop.r10s.jp/anker/cabinet/images/anker_2/a1228_normal.jpg",
+    "url": "https://www.amazon.co.jp/dp/B0BYJNF5Q4",
+    "asin": "B0BYJNF5Q4",
+    "price": "¥3,990",
+    "rating": 4.6
   }
 ]
