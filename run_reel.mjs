@@ -108,7 +108,7 @@ function generateVideo(product) {
   `);
 }
 
-// ===== Cloudinary（最終完全版） =====
+// ===== Cloudinary（完全一致版） =====
 async function uploadToCloudinary() {
   console.log("UPLOAD CLOUDINARY");
 
@@ -124,8 +124,8 @@ async function uploadToCloudinary() {
       },
       body: JSON.stringify({
         file: `data:video/mp4;base64,${base64}`,
-        upload_preset: "リールアップロード", // ←ここ修正済み
-        public_id: `reel_${Date.now()}`,     // ←これが超重要
+        upload_preset: "reel_upload_1", // ←確定版
+        public_id: `reel_${Date.now()}`,
         resource_type: "video"
       })
     }
