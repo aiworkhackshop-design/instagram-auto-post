@@ -1,7 +1,5 @@
-import fetch from "node-fetch";
 import fs from "fs";
 import { execSync } from "child_process";
-import FormData from "form-data";
 
 // ===== ENV =====
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
@@ -40,8 +38,10 @@ function getProduct() {
   return valid[Math.floor(Math.random() * valid.length)];
 }
 
-// ===== 画像DL =====
+// ===== 画像DL（ネイティブfetch） =====
 async function downloadImage(url) {
+  console.log("DOWNLOAD:", url);
+
   const res = await fetch(url);
   if (!res.ok) throw new Error("画像取得失敗");
 
@@ -49,7 +49,7 @@ async function downloadImage(url) {
   fs.writeFileSync(imagePath, Buffer.from(buffer));
 }
 
-// ===== 🔥 動画生成（日本語完全対応） =====
+// ===== 🔥 動画生成 =====
 function generateVideo(product) {
   console.log("GENERATE VIDEO");
 
@@ -86,10 +86,12 @@ function generateVideo(product) {
   `);
 }
 
-// ===== Cloudinary =====
+// ===== Cloudinary（ネイティブFormData） =====
 async function uploadToCloudinary() {
+  console.log("UPLOAD CLOUDINARY");
+
   const form = new FormData();
-  form.append("file", fs.createReadStream(videoPath));
+  form.append("file", new Blob([fs.readFileSync(videoPath)]));
   form.append("upload_preset", "ml_default");
 
   const res = await fetch(
@@ -113,6 +115,8 @@ async function uploadToCloudinary() {
 // ===== 処理待ち =====
 async function waitForMedia(mediaId) {
   for (let i = 0; i < 12; i++) {
+    console.log("WAITING...");
+
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
     );
@@ -140,6 +144,8 @@ ${product.url}
 #Amazon #おすすめ #便利グッズ #ガジェット
 `;
 
+  console.log("CREATE MEDIA");
+
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
     {
@@ -154,9 +160,13 @@ ${product.url}
   );
 
   const mediaData = await media.json();
+  console.log("MEDIA:", mediaData);
+
   if (!mediaData.id) throw new Error("メディア作成失敗");
 
   await waitForMedia(mediaData.id);
+
+  console.log("PUBLISH");
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
@@ -170,25 +180,33 @@ ${product.url}
   );
 
   const publishData = await publish.json();
+  console.log("RESULT:", publishData);
+
   if (!publishData.id) throw new Error("投稿失敗");
 }
 
 // ===== 実行 =====
 async function run() {
   try {
+    console.log("START");
+
     assertEnv();
 
     const product = getProduct();
+    console.log("PRODUCT:", product);
 
     await downloadImage(product.image);
     generateVideo(product);
 
     const video_url = await uploadToCloudinary();
+    console.log("VIDEO URL:", video_url);
+
     await postReel(product, video_url);
 
     console.log("SUCCESS 🎉");
+
   } catch (err) {
-    console.error(err.message);
+    console.error("ERROR:", err.message);
     process.exit(1);
   }
 }
