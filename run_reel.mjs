@@ -1,6 +1,5 @@
 import fs from "fs";
 import { execSync } from "child_process";
-import FormData from "form-data";
 
 // ===== ENV =====
 const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
@@ -29,13 +28,11 @@ function getProduct() {
   const products = JSON.parse(raw);
 
   const valid = products.filter((p) => p.image && p.title && p.url);
-  if (valid.length === 0) throw new Error("商品データが不正");
+  if (valid.length === 0) throw new Error("商品データ不正");
 
   const product = valid[Math.floor(Math.random() * valid.length)];
 
-  // タイトル強化
   product.title = `【神】${product.title}`;
-
   return product;
 }
 
@@ -45,13 +42,12 @@ async function downloadImage(url) {
 
   try {
     const res = await fetch(url);
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error();
 
     const buffer = await res.arrayBuffer();
     fs.writeFileSync(imagePath, Buffer.from(buffer));
-  } catch (err) {
-    console.log("⚠️ 画像失敗 → 代替画像");
+  } catch {
+    console.log("⚠️ fallback画像使用");
 
     const fallback = await fetch("https://picsum.photos/1080/1920");
     const buffer = await fallback.arrayBuffer();
@@ -59,7 +55,7 @@ async function downloadImage(url) {
   }
 }
 
-// ===== 動画生成（最強版） =====
+// ===== 動画生成 =====
 function generateVideo(product) {
   console.log("GENERATE VIDEO");
 
@@ -72,7 +68,6 @@ function generateVideo(product) {
     ffmpeg -y -loop 1 -i ${imagePath} \
     -vf "
     scale=1080:1920,
-
     zoompan=z='min(zoom+0.002,1.3)':d=180,
 
     drawbox=x=0:y=0:w=1080:h=350:color=black@0.6:t=fill,
@@ -94,14 +89,14 @@ function generateVideo(product) {
     drawbox=x=0:y=1550:w=1080:h=300:color=black@0.6:t=fill,
 
     drawtext=fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc:
-    text='👇プロフのリンクから':
+    text='👇プロフからチェック':
     fontcolor=white:
     fontsize=55:
     x=(w-text_w)/2:
     y=1600,
 
     drawtext=fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc:
-    text='今すぐチェック':
+    text='今すぐ見る':
     fontcolor=yellow:
     fontsize=70:
     x=(w-text_w)/2:
@@ -113,19 +108,24 @@ function generateVideo(product) {
   `);
 }
 
-// ===== Cloudinary =====
+// ===== Cloudinary（form-data不要版） =====
 async function uploadToCloudinary() {
   console.log("UPLOAD CLOUDINARY");
 
-  const form = new FormData();
-  form.append("file", fs.createReadStream(videoPath));
-  form.append("upload_preset", "ml_default");
+  const buffer = fs.readFileSync(videoPath);
+  const base64 = buffer.toString("base64");
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
     {
       method: "POST",
-      body: form,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        file: `data:video/mp4;base64,${base64}`,
+        upload_preset: "ml_default"
+      })
     }
   );
 
@@ -142,14 +142,11 @@ async function uploadToCloudinary() {
 // ===== ステータス待機 =====
 async function waitForMedia(mediaId) {
   for (let i = 0; i < 10; i++) {
-    console.log("CHECK STATUS...");
-
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
     );
 
     const data = await res.json();
-    console.log("STATUS:", data);
 
     if (data.status_code === "FINISHED") return;
 
@@ -168,15 +165,13 @@ async function postReel(product, video_url) {
 
 ${product.title}
 
-これ知らないと損レベル
+これ知らないと損
 
-👇最安はプロフから
+👇プロフからチェック
 ${product.url}
 
-#Amazon #便利グッズ #買ってよかった #ガジェット
+#Amazon #便利グッズ #買ってよかった
 `;
-
-  console.log("CREATE MEDIA");
 
   const media = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media`,
@@ -186,19 +181,15 @@ ${product.url}
         media_type: "REELS",
         video_url,
         caption,
-        access_token: ACCESS_TOKEN,
-      }),
+        access_token: ACCESS_TOKEN
+      })
     }
   );
 
   const mediaData = await media.json();
-  console.log("MEDIA:", mediaData);
-
   if (!mediaData.id) throw new Error("メディア作成失敗");
 
   await waitForMedia(mediaData.id);
-
-  console.log("PUBLISH");
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${IG_ID}/media_publish`,
@@ -206,14 +197,12 @@ ${product.url}
       method: "POST",
       body: new URLSearchParams({
         creation_id: mediaData.id,
-        access_token: ACCESS_TOKEN,
-      }),
+        access_token: ACCESS_TOKEN
+      })
     }
   );
 
   const publishData = await publish.json();
-  console.log("PUBLISH:", publishData);
-
   if (!publishData.id) throw new Error("投稿失敗");
 }
 
@@ -231,11 +220,12 @@ async function run() {
     generateVideo(product);
 
     const video_url = await uploadToCloudinary();
-    console.log("VIDEO URL:", video_url);
+    console.log("VIDEO:", video_url);
 
     await postReel(product, video_url);
 
     console.log("SUCCESS 🎉");
+
   } catch (err) {
     console.error("ERROR:", err.message);
     process.exit(1);
