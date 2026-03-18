@@ -8,11 +8,11 @@ const ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const IG_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || process.env.IG_ACCOUNT_ID;
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 
-// ===== 設定 =====
+// ===== PATH =====
 const imagePath = "./image.jpg";
 const videoPath = "./video.mp4";
 
-// ===== 共通 =====
+// ===== UTIL =====
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
@@ -29,13 +29,13 @@ function getProduct() {
   const products = JSON.parse(raw);
 
   if (!Array.isArray(products) || products.length === 0) {
-    throw new Error("products.json が空 or 配列じゃない");
+    throw new Error("products.json が空");
   }
 
   const valid = products.filter(p => p.image && p.title && p.url);
 
   if (valid.length === 0) {
-    throw new Error("有効な商品データがない");
+    throw new Error("有効な商品なし");
   }
 
   return valid[Math.floor(Math.random() * valid.length)];
@@ -43,6 +43,8 @@ function getProduct() {
 
 // ===== 画像DL =====
 async function downloadImage(url) {
+  console.log("DOWNLOAD:", url);
+
   const res = await fetch(url);
   if (!res.ok) throw new Error("画像取得失敗");
 
@@ -50,29 +52,37 @@ async function downloadImage(url) {
   fs.writeFileSync(imagePath, Buffer.from(buffer));
 }
 
-// ===== 🔥 動画生成（完全版） =====
+// ===== 🔥 動画生成（最強版） =====
 function generateVideo(product) {
   console.log("GENERATE VIDEO");
 
-  const safeTitle = product.title.replace(/'/g, "");
+  const safeTitle = product.title
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .slice(0, 30); // 長すぎ防止
 
   execSync(`
     ffmpeg -y -loop 1 -i ${imagePath} \
     -vf "
     scale=1080:1920,
-    drawbox=x=0:y=0:w=1080:h=400:color=black@0.4:t=fill,
+    zoompan=z='min(zoom+0.0015,1.5)':d=180,
+
+    drawbox=x=0:y=0:w=1080:h=420:color=black@0.6:t=fill,
+
     drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
-    text='これ知らないと損':
-    fontcolor=white:
+    text='【99%が知らない】':
+    fontcolor=yellow:
     fontsize=80:
     x=(w-text_w)/2:
     y=120,
+
     drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
     text='${safeTitle}':
     fontcolor=white:
     fontsize=60:
     x=(w-text_w)/2:
     y=260,
+
     format=yuv420p
     " \
     -t 6 -r 30 -c:v libx264 -pix_fmt yuv420p ${videoPath}
@@ -81,6 +91,8 @@ function generateVideo(product) {
 
 // ===== Cloudinary =====
 async function uploadToCloudinary() {
+  console.log("UPLOAD CLOUDINARY");
+
   const form = new FormData();
   form.append("file", fs.createReadStream(videoPath));
   form.append("upload_preset", "ml_default");
@@ -103,10 +115,10 @@ async function uploadToCloudinary() {
   return data.secure_url;
 }
 
-// ===== 処理待ち（最重要） =====
+// ===== 処理待ち =====
 async function waitForMedia(mediaId) {
-  for (let i = 0; i < 10; i++) {
-    console.log("CHECK STATUS...");
+  for (let i = 0; i < 12; i++) {
+    console.log("WAITING...");
 
     const res = await fetch(
       `https://graph.facebook.com/v19.0/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
@@ -115,11 +127,9 @@ async function waitForMedia(mediaId) {
     const data = await res.json();
     console.log("STATUS:", data);
 
-    if (data.status_code === "FINISHED") {
-      return;
-    }
+    if (data.status_code === "FINISHED") return;
 
-    await sleep(10000);
+    await sleep(8000);
   }
 
   throw new Error("動画処理終わらない");
@@ -127,7 +137,6 @@ async function waitForMedia(mediaId) {
 
 // ===== 投稿 =====
 async function postReel(product, video_url) {
-
   const caption = `
 🔥 今売れてる商品
 
@@ -177,7 +186,7 @@ ${product.url}
   );
 
   const publishData = await publish.json();
-  console.log("PUBLISH:", publishData);
+  console.log("RESULT:", publishData);
 
   if (!publishData.id) {
     throw new Error("投稿失敗");
@@ -198,7 +207,7 @@ async function run() {
     generateVideo(product);
 
     const video_url = await uploadToCloudinary();
-    console.log("VIDEO URL:", video_url);
+    console.log("VIDEO:", video_url);
 
     await postReel(product, video_url);
 
