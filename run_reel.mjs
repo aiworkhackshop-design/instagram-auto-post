@@ -36,7 +36,7 @@ function getProduct() {
   return product;
 }
 
-// ===== 画像DL（失敗しても止まらない） =====
+// ===== 画像DL =====
 async function downloadImage(url) {
   console.log("DOWNLOAD:", url);
 
@@ -108,7 +108,7 @@ function generateVideo(product) {
   `);
 }
 
-// ===== Cloudinary（完全修正版） =====
+// ===== Cloudinary（最終完全版） =====
 async function uploadToCloudinary() {
   console.log("UPLOAD CLOUDINARY");
 
@@ -124,8 +124,8 @@ async function uploadToCloudinary() {
       },
       body: JSON.stringify({
         file: `data:video/mp4;base64,${base64}`,
-        upload_preset: "ml_default",
-        public_id: `reel_${Date.now()}`,
+        upload_preset: "リールアップロード", // ←ここ修正済み
+        public_id: `reel_${Date.now()}`,     // ←これが超重要
         resource_type: "video"
       })
     }
@@ -169,8 +169,6 @@ async function postReel(product, video_url) {
 今バズってる商品👇
 
 ${product.title}
-
-これ知らないと損
 
 👇プロフからチェック
 ${product.url}
